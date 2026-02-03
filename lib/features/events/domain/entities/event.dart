@@ -34,6 +34,9 @@ class Event {
     required this.isRegistered,
   });
 
+  /// Whether the event has ended (registration no longer available).
+  bool get isExpired => status == EventStatus.completed;
+
   /// Creates a copy of this event with the given fields replaced with new values.
   Event copyWith({
     String? id,

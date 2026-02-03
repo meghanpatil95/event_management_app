@@ -90,27 +90,19 @@ class EventRepositoryImpl implements EventRepository {
 
   @override
   Future<Event> registerForEvent(String eventId) async {
-    try {
-      final eventDto = await _remoteDataSource.registerForEvent(eventId);
-      await _localDataSource.cacheEvent(eventDto);
-      return eventDto.toDomain();
-    } on EventNotFoundException catch (e) {
-      throw Exception('Event not found: ${e.eventId}');
-    } on NetworkException catch (e) {
-      throw Exception('Failed to register for event: ${e.message}');
-    }
+    final eventDto = await _remoteDataSource.registerForEvent(eventId);
+    final cached = await _localDataSource.getCachedEvents();
+    final updated = _mergeAndSort(cached, [eventDto]);
+    await _localDataSource.cacheEvents(updated);
+    return eventDto.toDomain();
   }
 
   @override
   Future<Event> unregisterFromEvent(String eventId) async {
-    try {
-      final eventDto = await _remoteDataSource.unregisterFromEvent(eventId);
-      await _localDataSource.cacheEvent(eventDto);
-      return eventDto.toDomain();
-    } on EventNotFoundException catch (e) {
-      throw Exception('Event not found: ${e.eventId}');
-    } on NetworkException catch (e) {
-      throw Exception('Failed to unregister from event: ${e.message}');
-    }
+    final eventDto = await _remoteDataSource.unregisterFromEvent(eventId);
+    final cached = await _localDataSource.getCachedEvents();
+    final updated = _mergeAndSort(cached, [eventDto]);
+    await _localDataSource.cacheEvents(updated);
+    return eventDto.toDomain();
   }
 }

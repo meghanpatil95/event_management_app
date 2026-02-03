@@ -19,6 +19,35 @@ class EventNotFoundException implements Exception {
   String toString() => 'EventNotFoundException: Event with id $eventId not found';
 }
 
+/// Exception thrown when registering for an event the user is already registered for.
+class AlreadyRegisteredException implements Exception {
+  final String eventId;
+  AlreadyRegisteredException(this.eventId);
+
+  @override
+  String toString() =>
+      'AlreadyRegisteredException: Already registered for event $eventId';
+}
+
+/// Exception thrown when the event has expired (date/time has passed).
+class EventExpiredException implements Exception {
+  final String eventId;
+  EventExpiredException(this.eventId);
+
+  @override
+  String toString() => 'EventExpiredException: Event $eventId has expired';
+}
+
+/// Exception thrown when unregistering from an event the user is not registered for.
+class NotRegisteredException implements Exception {
+  final String eventId;
+  NotRegisteredException(this.eventId);
+
+  @override
+  String toString() =>
+      'NotRegisteredException: Not registered for event $eventId';
+}
+
 /// Remote data source for events.
 /// 
 /// This is a mock implementation that simulates network calls using Future.delayed.
@@ -48,6 +77,8 @@ abstract class EventRemoteDataSource {
   /// [eventId] - The unique identifier of the event to register for.
   /// Returns the updated [EventDto] with [isRegistered] set to true.
   /// Throws [EventNotFoundException] if the event is not found.
+  /// Throws [AlreadyRegisteredException] if already registered for the event.
+  /// Throws [EventExpiredException] if the event has expired.
   /// Throws [NetworkException] if the operation fails.
   Future<EventDto> registerForEvent(String eventId);
 
@@ -56,6 +87,8 @@ abstract class EventRemoteDataSource {
   /// [eventId] - The unique identifier of the event to unregister from.
   /// Returns the updated [EventDto] with [isRegistered] set to false.
   /// Throws [EventNotFoundException] if the event is not found.
+  /// Throws [NotRegisteredException] if not registered for the event.
+  /// Throws [EventExpiredException] if the event has expired.
   /// Throws [NetworkException] if the operation fails.
   Future<EventDto> unregisterFromEvent(String eventId);
 }
@@ -138,8 +171,24 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
     await _simulateNetworkDelay();
     _simulateError();
 
-    final event = await getEventById(eventId);
-    
+    if (_events.isEmpty) {
+      _generateMockEvents();
+    }
+
+    final event = _events[eventId];
+    if (event == null) {
+      throw EventNotFoundException(eventId);
+    }
+
+    final eventDateTime = DateTime.parse(event.dateTime);
+    if (eventDateTime.isBefore(DateTime.now())) {
+      throw EventExpiredException(eventId);
+    }
+
+    if (event.isRegistered) {
+      throw AlreadyRegisteredException(eventId);
+    }
+
     final updatedEvent = EventDto(
       id: event.id,
       title: event.title,
@@ -159,8 +208,24 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
     await _simulateNetworkDelay();
     _simulateError();
 
-    final event = await getEventById(eventId);
-    
+    if (_events.isEmpty) {
+      _generateMockEvents();
+    }
+
+    final event = _events[eventId];
+    if (event == null) {
+      throw EventNotFoundException(eventId);
+    }
+
+    final eventDateTime = DateTime.parse(event.dateTime);
+    if (eventDateTime.isBefore(DateTime.now())) {
+      throw EventExpiredException(eventId);
+    }
+
+    if (!event.isRegistered) {
+      throw NotRegisteredException(eventId);
+    }
+
     final updatedEvent = EventDto(
       id: event.id,
       title: event.title,

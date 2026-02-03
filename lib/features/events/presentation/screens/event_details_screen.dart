@@ -3,44 +3,67 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/domain.dart';
 import '../providers/providers.dart';
+import '../state/event_registration_state.dart';
 
 /// Screen that displays a single event's details.
 ///
 /// Fetches event via [eventDetailsProvider] using [eventId].
+/// Watches [eventRegistrationProvider] and loads initial registration status on init.
 /// Shows loading, error, and data states.
-class EventDetailsScreen extends ConsumerWidget {
+class EventDetailsScreen extends ConsumerStatefulWidget {
   /// The event ID to load; typically passed from [EventListScreen] navigation.
   final String eventId;
 
-  const EventDetailsScreen({
-    super.key,
-    required this.eventId,
-  });
+  const EventDetailsScreen({super.key, required this.eventId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EventDetailsScreen> createState() => _EventDetailsScreenState();
+}
+
+class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
+  bool _didLoadInitial = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final eventId = widget.eventId;
     final eventAsync = ref.watch(eventDetailsProvider(eventId));
+    final registrationState = ref.watch(eventRegistrationProvider(eventId));
+
+    ref.listen<EventRegistrationState>(eventRegistrationProvider(eventId), (
+      previous,
+      next,
+    ) {
+      if (next.errorMessage != null && previous?.errorMessage == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
+    if (!_didLoadInitial) {
+      _didLoadInitial = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(eventRegistrationProvider(eventId).notifier)
+            .loadInitialStatus(eventId);
+      });
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Event Details'),
-      ),
+      appBar: AppBar(title: const Text('Event Details')),
       body: eventAsync.when(
-        data: (event) => _EventDetailsContent(event: event),
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
+        data: (event) => _EventDetailsContent(
+          event: event,
+          registrationState: registrationState,
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
-                ),
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load event',
@@ -55,7 +78,8 @@ class EventDetailsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () => ref.invalidate(eventDetailsProvider(eventId)),
+                  onPressed: () =>
+                      ref.invalidate(eventDetailsProvider(eventId)),
                   child: const Text('Retry'),
                 ),
               ],
@@ -67,13 +91,57 @@ class EventDetailsScreen extends ConsumerWidget {
   }
 }
 
-class _EventDetailsContent extends StatelessWidget {
+class _EventDetailsContent extends ConsumerWidget {
   final Event event;
+  final EventRegistrationState registrationState;
 
-  const _EventDetailsContent({required this.event});
+  const _EventDetailsContent({
+    required this.event,
+    required this.registrationState,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isRegistered = registrationState.isRegistered || event.isRegistered;
+    final notifier = ref.read(eventRegistrationProvider(event.id).notifier);
+    final isExpired = event.isExpired;
+    final isCancelled = event.status.name == 'cancelled';
+
+    final isLoading = registrationState.isLoading;
+
+    String buttonLabel;
+    bool enabled;
+    Widget? buttonChild;
+    if (isExpired) {
+      buttonLabel = 'Event Expired';
+      enabled = false;
+    } else if (isLoading) {
+      buttonLabel = ''; // unused, we show indicator
+      enabled = false;
+      buttonChild = const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    } else if (isRegistered) {
+      buttonLabel = 'Unregister';
+      enabled = true;
+    } else if (isCancelled) {
+      buttonLabel = 'Event Cancelled';
+      enabled = false;
+    } else {
+      buttonLabel = 'Register';
+      enabled = true;
+    }
+
+    void onPressed() {
+      if (isRegistered) {
+        notifier.unregister(event.id);
+      } else {
+        notifier.register(event.id);
+      }
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -81,13 +149,13 @@ class _EventDetailsContent extends StatelessWidget {
         children: [
           Text(
             event.title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           _StatusChip(status: event.status),
-          if (event.isRegistered) ...[
+          if (isRegistered) ...[
             const SizedBox(height: 8),
             Row(
               children: [
@@ -100,9 +168,9 @@ class _EventDetailsContent extends StatelessWidget {
                 Text(
                   'You are registered',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -122,14 +190,19 @@ class _EventDetailsContent extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'Description',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
-            event.description,
-            style: Theme.of(context).textTheme.bodyLarge,
+          Text(event.description, style: Theme.of(context).textTheme.bodyLarge),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: enabled ? onPressed : null,
+              child: buttonChild ?? Text(buttonLabel),
+            ),
           ),
         ],
       ),
@@ -138,8 +211,18 @@ class _EventDetailsContent extends StatelessWidget {
 
   static String _formatDateTime(DateTime dateTime) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final month = months[dateTime.month - 1];
     final day = dateTime.day;
@@ -203,14 +286,11 @@ class _DetailRow extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              Text(value, style: Theme.of(context).textTheme.bodyLarge),
             ],
           ),
         ),
