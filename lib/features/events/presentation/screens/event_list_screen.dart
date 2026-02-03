@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/providers.dart';
+import '../../../auth/presentation/state/auth_state.dart';
 import '../providers/providers.dart';
 import '../widgets/event_list_item.dart';
 import 'event_details_screen.dart';
@@ -58,9 +60,30 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsProvider);
 
+    final authState = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Events'),
+        actions: [
+          if (authState case AuthAuthenticated(:final session))
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  session.user.displayName,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              ref.read(authProvider.notifier).logout();
+            },
+            tooltip: 'Log out',
+          ),
+        ],
       ),
       body: eventsAsync.when(
         data: (state) {

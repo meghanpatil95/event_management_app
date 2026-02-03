@@ -1,3 +1,4 @@
+import '../../../../core/network/api_exceptions.dart';
 import '../../domain/domain.dart';
 import '../datasources/event_local_data_source.dart';
 import '../datasources/event_remote_data_source.dart';
@@ -38,10 +39,7 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
-  Future<List<Event>> getEventsPage({
-    int page = 1,
-    int pageSize = 20,
-  }) async {
+  Future<List<Event>> getEventsPage({int page = 1, int pageSize = 20}) async {
     try {
       final eventDtos = await _remoteDataSource.getEvents(
         page: page,
@@ -94,6 +92,7 @@ class EventRepositoryImpl implements EventRepository {
     final cached = await _localDataSource.getCachedEvents();
     final updated = _mergeAndSort(cached, [eventDto]);
     await _localDataSource.cacheEvents(updated);
+    await _localDataSource.debugPrintCachedEvents();
     return eventDto.toDomain();
   }
 
@@ -103,6 +102,7 @@ class EventRepositoryImpl implements EventRepository {
     final cached = await _localDataSource.getCachedEvents();
     final updated = _mergeAndSort(cached, [eventDto]);
     await _localDataSource.cacheEvents(updated);
+    await _localDataSource.debugPrintCachedEvents();
     return eventDto.toDomain();
   }
 }

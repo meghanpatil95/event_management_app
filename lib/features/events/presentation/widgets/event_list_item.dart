@@ -108,6 +108,10 @@ class EventListItem extends StatelessWidget {
         statusColor = Colors.red;
         statusText = 'Cancelled';
         break;
+      case EventStatus.expired:
+        statusColor = Colors.orange;
+        statusText = 'Expired';
+        break;
     }
 
     return Chip(

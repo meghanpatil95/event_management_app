@@ -66,7 +66,8 @@ class EventRegistrationNotifier extends StateNotifier<EventRegistrationState> {
         isLoading: false,
         errorMessage: null,
       );
-    } catch (e, _) {
+    } catch (e, _stacktrace) {
+      print("e :$e \n stacktrace $_stacktrace");
       state = state.copyWith(
         isLoading: false,
         isRegistered: state.isRegistered,

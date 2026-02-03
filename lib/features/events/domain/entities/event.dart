@@ -102,4 +102,7 @@ enum EventStatus {
 
   /// Event has been cancelled
   cancelled,
+
+  /// Event date/time has passed (expired)
+  expired,
 }

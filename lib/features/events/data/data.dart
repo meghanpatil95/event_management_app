@@ -5,5 +5,6 @@
 
 export 'datasources/event_local_data_source.dart';
 export 'datasources/event_remote_data_source.dart';
+export 'datasources/event_rest_remote_data_source.dart';
 export 'dto/event_dto.dart';
 export 'repositories/event_repository_impl.dart';

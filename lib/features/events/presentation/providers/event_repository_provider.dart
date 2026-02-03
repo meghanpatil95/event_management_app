@@ -1,18 +1,17 @@
+import 'package:event_management_app/core/network/api_client_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/api_config.dart';
 import '../../data/data.dart';
 import '../../domain/domain.dart';
 
 /// Provider for [EventRepository] injection.
 ///
-/// Supplies the application with an [EventRepository] implementation.
-/// Uses [EventRepositoryImpl] with [MockEventRemoteDataSource] by default.
+/// Uses [EventRepositoryImpl] with [EventRestRemoteDataSource] (REST API)
+/// and local cache for offline support.
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
-  final remoteDataSource = MockEventRemoteDataSource(
-    errorRate: 0.0,
-    minDelayMs: 200,
-    maxDelayMs: 800,
-  );
+  final client = ref.watch(apiClientProvider);
+  final remoteDataSource = ApiConfig.useMockApi ? MockEventRemoteDataSource() : EventRestRemoteDataSource(client);
   final localDataSource = EventLocalDataSourceImpl();
   return EventRepositoryImpl(remoteDataSource, localDataSource);
 });

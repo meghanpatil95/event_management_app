@@ -99,6 +99,8 @@ class EventDto {
         return EventStatus.completed;
       case 'cancelled':
         return EventStatus.cancelled;
+      case 'expired':
+        return EventStatus.expired;
       default:
         return EventStatus.upcoming;
     }
@@ -115,6 +117,8 @@ class EventDto {
         return 'completed';
       case EventStatus.cancelled:
         return 'cancelled';
+      case EventStatus.expired:
+        return 'expired';
     }
   }
 }

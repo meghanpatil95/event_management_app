@@ -104,9 +104,11 @@ class _EventDetailsContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isRegistered = registrationState.isRegistered || event.isRegistered;
     final notifier = ref.read(eventRegistrationProvider(event.id).notifier);
-    final isExpired = event.isExpired;
-    final isCancelled = event.status.name == 'cancelled';
+    // final isExpired = event.isExpired;
+    final isExpired = event.status.name == 'expired';
 
+    final isCancelled = event.status.name == 'cancelled';
+    print("isExpired :$isExpired \n isCancelled : $isCancelled \n event.status.name :${event.status.name} \n event.isExpired : ${event.isExpired}");
     final isLoading = registrationState.isLoading;
 
     String buttonLabel;
@@ -248,6 +250,7 @@ class _StatusChip extends StatelessWidget {
       EventStatus.ongoing => (Colors.green, 'Ongoing'),
       EventStatus.completed => (Colors.grey, 'Completed'),
       EventStatus.cancelled => (Colors.red, 'Cancelled'),
+      EventStatus.expired => (Colors.orange, 'Expired'),
     };
     return Chip(
       label: Text(
