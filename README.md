@@ -1,4 +1,4 @@
-# Event Management & Live Updates Mobile Application
+# Event Management Application
 
 A production-quality Flutter mobile application showcasing Clean Architecture, real-time communication, and modern state management practices. Built for event discovery, registration, live updates, and in-event group chat.
 
