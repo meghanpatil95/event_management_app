@@ -48,82 +48,86 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(eventChatProvider);
     final auth = ref.watch(authProvider);
-    final currentUserId = auth is AuthAuthenticated ? auth.session.user.id : null;
+    final currentUserId = auth is AuthAuthenticated
+        ? auth.session.user.id
+        : null;
 
     ref.listen<EventChatState>(eventChatProvider, (prev, next) {
-      if (next.errorMessage != null && prev?.errorMessage != next.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+      if (next.errorMessage != null &&
+          prev?.errorMessage != next.errorMessage) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
         ref.read(eventChatProvider.notifier).clearError();
       }
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.eventTitle ?? 'Event Chat'),
-      ),
-      body: Column(
-        children: [
-          if (chatState.isLoading && chatState.messages.isEmpty)
-            const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else
-            Expanded(
-              child: chatState.messages.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No messages yet. Say hello!',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+      appBar: AppBar(title: Text(widget.eventTitle ?? 'Event Chat')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (chatState.isLoading && chatState.messages.isEmpty)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: chatState.messages.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No messages yet. Say hello!',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        itemCount: chatState.messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = chatState.messages[index];
+                          return _ChatBubble(
+                            message: msg,
+                            currentUserId: currentUserId,
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      itemCount: chatState.messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = chatState.messages[index];
-                        return _ChatBubble(
-                          message: msg,
-                          currentUserId: currentUserId,
-                        );
-                      },
-                    ),
-            ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+              ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
+                      maxLines: 3,
+                      minLines: 1,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _send(),
                     ),
-                    maxLines: 3,
-                    minLines: 1,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _send(),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _send,
-                  tooltip: 'Send',
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.send),
+                    onPressed: _send,
+                    tooltip: 'Send',
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -149,7 +153,9 @@ class _ChatBubble extends StatelessWidget {
             maxWidth: MediaQuery.sizeOf(context).width * 0.8,
           ),
           child: Column(
-            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isMe
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               if (!isMe)
                 Padding(
@@ -172,7 +178,10 @@ class _ChatBubble extends StatelessWidget {
                     ? theme.colorScheme.primaryContainer
                     : theme.colorScheme.surfaceContainerHighest,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   child: Text(
                     message.content,
                     style: theme.textTheme.bodyLarge,
