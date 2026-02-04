@@ -17,7 +17,6 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$EventRegistrationState {
-  bool get isRegistered => throw _privateConstructorUsedError;
   bool get isLoading => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
 
@@ -35,7 +34,7 @@ abstract class $EventRegistrationStateCopyWith<$Res> {
     $Res Function(EventRegistrationState) then,
   ) = _$EventRegistrationStateCopyWithImpl<$Res, EventRegistrationState>;
   @useResult
-  $Res call({bool isRegistered, bool isLoading, String? errorMessage});
+  $Res call({bool isLoading, String? errorMessage});
 }
 
 /// @nodoc
@@ -55,17 +54,9 @@ class _$EventRegistrationStateCopyWithImpl<
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? isRegistered = null,
-    Object? isLoading = null,
-    Object? errorMessage = freezed,
-  }) {
+  $Res call({Object? isLoading = null, Object? errorMessage = freezed}) {
     return _then(
       _value.copyWith(
-            isRegistered: null == isRegistered
-                ? _value.isRegistered
-                : isRegistered // ignore: cast_nullable_to_non_nullable
-                      as bool,
             isLoading: null == isLoading
                 ? _value.isLoading
                 : isLoading // ignore: cast_nullable_to_non_nullable
@@ -89,7 +80,7 @@ abstract class _$$EventRegistrationStateImplCopyWith<$Res>
   ) = __$$EventRegistrationStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({bool isRegistered, bool isLoading, String? errorMessage});
+  $Res call({bool isLoading, String? errorMessage});
 }
 
 /// @nodoc
@@ -106,17 +97,9 @@ class __$$EventRegistrationStateImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? isRegistered = null,
-    Object? isLoading = null,
-    Object? errorMessage = freezed,
-  }) {
+  $Res call({Object? isLoading = null, Object? errorMessage = freezed}) {
     return _then(
       _$EventRegistrationStateImpl(
-        isRegistered: null == isRegistered
-            ? _value.isRegistered
-            : isRegistered // ignore: cast_nullable_to_non_nullable
-                  as bool,
         isLoading: null == isLoading
             ? _value.isLoading
             : isLoading // ignore: cast_nullable_to_non_nullable
@@ -134,14 +117,10 @@ class __$$EventRegistrationStateImplCopyWithImpl<$Res>
 
 class _$EventRegistrationStateImpl implements _EventRegistrationState {
   const _$EventRegistrationStateImpl({
-    this.isRegistered = false,
     this.isLoading = false,
     this.errorMessage,
   });
 
-  @override
-  @JsonKey()
-  final bool isRegistered;
   @override
   @JsonKey()
   final bool isLoading;
@@ -150,7 +129,7 @@ class _$EventRegistrationStateImpl implements _EventRegistrationState {
 
   @override
   String toString() {
-    return 'EventRegistrationState(isRegistered: $isRegistered, isLoading: $isLoading, errorMessage: $errorMessage)';
+    return 'EventRegistrationState(isLoading: $isLoading, errorMessage: $errorMessage)';
   }
 
   @override
@@ -158,8 +137,6 @@ class _$EventRegistrationStateImpl implements _EventRegistrationState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$EventRegistrationStateImpl &&
-            (identical(other.isRegistered, isRegistered) ||
-                other.isRegistered == isRegistered) &&
             (identical(other.isLoading, isLoading) ||
                 other.isLoading == isLoading) &&
             (identical(other.errorMessage, errorMessage) ||
@@ -167,8 +144,7 @@ class _$EventRegistrationStateImpl implements _EventRegistrationState {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, isRegistered, isLoading, errorMessage);
+  int get hashCode => Object.hash(runtimeType, isLoading, errorMessage);
 
   /// Create a copy of EventRegistrationState
   /// with the given fields replaced by the non-null parameter values.
@@ -185,13 +161,10 @@ class _$EventRegistrationStateImpl implements _EventRegistrationState {
 
 abstract class _EventRegistrationState implements EventRegistrationState {
   const factory _EventRegistrationState({
-    final bool isRegistered,
     final bool isLoading,
     final String? errorMessage,
   }) = _$EventRegistrationStateImpl;
 
-  @override
-  bool get isRegistered;
   @override
   bool get isLoading;
   @override

@@ -17,7 +17,7 @@ abstract class EventRepository {
   /// [pageSize] - The number of items per page.
   /// Returns a list of [Event] entities for the requested page.
   /// Throws an exception if the operation fails.
-  Future<List<Event>> getEventsPage({int page = 1, int pageSize = 20});
+  Future<List<Event>> getEventsPage({int page = 1, int pageSize = 20,String searchQuery = ''});
 
   /// Fetches a single event by its ID.
   ///

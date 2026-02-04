@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/notifications/notification_provider.dart';
+import '../../../chat/presentation/screens/event_chat_screen.dart';
 import '../../domain/domain.dart';
 import '../providers/providers.dart';
 import '../state/event_registration_state.dart';
@@ -29,14 +31,54 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final eventAsync = ref.watch(eventDetailsProvider(eventId));
     final registrationState = ref.watch(eventRegistrationProvider(eventId));
 
+    //  LISTEN TO REGISTRATION ERRORS ONLY
     ref.listen<EventRegistrationState>(eventRegistrationProvider(eventId), (
       previous,
       next,
     ) {
+
       if (next.errorMessage != null && previous?.errorMessage == null) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
+    //  LISTEN TO EVENT CHANGES FOR NOTIFICATIONS
+    ref.listen<AsyncValue<Event>>(eventDetailsProvider(eventId), (
+      previous,
+      next,
+    ) {
+
+
+      final oldRegistered = previous?.valueOrNull?.isRegistered ?? false;
+      final newRegistered = next.valueOrNull?.isRegistered ?? false;
+
+      final notificationService = ref.read(notificationServiceProvider);
+      final event = next.valueOrNull;
+      if (!oldRegistered && newRegistered) {
+        print("event for notify : $event");
+        if (event != null) {
+          notificationService.scheduleEventReminders(event);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                ' Successfully registered for the event\n ${event.title}',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else if (oldRegistered && !newRegistered) {
+        notificationService.cancelEventReminders(eventId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ' You have unregistered from the event ${event?.title}',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     });
 
@@ -49,8 +91,29 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       });
     }
 
+    // Keep live event updates subscription active so status changes refetch this event.
+    ref.watch(liveEventUpdatesProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Event Details')),
+      appBar: AppBar(
+        title: const Text('Event Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => EventChatScreen(
+                    eventId: eventId,
+                    eventTitle: eventAsync.valueOrNull?.title,
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Group Chat',
+          ),
+        ],
+      ),
       body: eventAsync.when(
         data: (event) => _EventDetailsContent(
           event: event,
@@ -91,6 +154,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 }
 
+
+
+
 class _EventDetailsContent extends ConsumerWidget {
   final Event event;
   final EventRegistrationState registrationState;
@@ -102,13 +168,16 @@ class _EventDetailsContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isRegistered = registrationState.isRegistered || event.isRegistered;
+    final isRegistered = event.isRegistered;
     final notifier = ref.read(eventRegistrationProvider(event.id).notifier);
     // final isExpired = event.isExpired;
     final isExpired = event.status.name == 'expired';
+    final isCompleted = event.status.name == 'completed';
 
     final isCancelled = event.status.name == 'cancelled';
-    print("isExpired :$isExpired \n isCancelled : $isCancelled \n event.status.name :${event.status.name} \n event.isExpired : ${event.isExpired}");
+    print(
+      "isCompleted :$isCompleted \n isExpired :$isExpired \n isCancelled : $isCancelled \n event.status.name :${event.status.name} \n event.isExpired : ${event.isExpired}",
+    );
     final isLoading = registrationState.isLoading;
 
     String buttonLabel;
@@ -116,6 +185,9 @@ class _EventDetailsContent extends ConsumerWidget {
     Widget? buttonChild;
     if (isExpired) {
       buttonLabel = 'Event Expired';
+      enabled = false;
+    } else if (isCompleted) {
+      buttonLabel = 'Event Completed';
       enabled = false;
     } else if (isLoading) {
       buttonLabel = ''; // unused, we show indicator
@@ -137,6 +209,7 @@ class _EventDetailsContent extends ConsumerWidget {
     }
 
     void onPressed() {
+      print("isRegistered onPressed ::$isRegistered eventid : ${event.id}");
       if (isRegistered) {
         notifier.unregister(event.id);
       } else {

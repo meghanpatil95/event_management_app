@@ -7,3 +7,4 @@ export 'event_registration_notifier.dart';
 export 'event_registration_provider.dart';
 export 'event_repository_provider.dart';
 export 'events_notifier.dart';
+export 'live_event_updates_provider.dart';

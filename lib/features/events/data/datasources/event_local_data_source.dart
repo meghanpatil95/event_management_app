@@ -34,13 +34,14 @@ abstract class EventLocalDataSource {
   /// Clears all cached events.
   Future<void> clearCache();
   Future<void> debugPrintCachedEvents();
+  Future<void> debugPrintCachedEventById(String eventId);
 }
 
 /// Hive-backed implementation of [EventLocalDataSource].
 class EventLocalDataSourceImpl implements EventLocalDataSource {
-  Box<String> get _box => Hive.box<String>(eventCacheBoxName);
+  Box<Map> get _box => Hive.box<Map>(eventCacheBoxName);
 
-  @override
+ /* @override
   Future<List<EventDto>> getCachedEvents() async {
     final jsonStr = _box.get(_eventsListKey);
     if (jsonStr == null || jsonStr.isEmpty) return [];
@@ -49,15 +50,32 @@ class EventLocalDataSourceImpl implements EventLocalDataSource {
     return list
         .map((e) => EventDto.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
-  }
+  }*/
 
   @override
+  Future<List<EventDto>> getCachedEvents() async {
+    return _box.values
+        .map((e) => EventDto.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+
+/*  @override
   Future<void> cacheEvents(List<EventDto> events) async {
     final list = events.map((e) => e.toJson()).toList();
     await _box.put(_eventsListKey, jsonEncode(list));
-  }
+  }*/
 
   @override
+  Future<void> cacheEvents(List<EventDto> events) async {
+    for (final event in events) {
+      await _box.put(event.id, event.toJson());
+    }
+  }
+
+
+
+ /* @override
   Future<EventDto?> getCachedEventById(String eventId) async {
     final events = await getCachedEvents();
     try {
@@ -65,7 +83,18 @@ class EventLocalDataSourceImpl implements EventLocalDataSource {
     } catch (_) {
       return null;
     }
+  }*/
+
+  @override
+  Future<EventDto?> getCachedEventById(String eventId) async {
+    final map = _box.get(eventId);
+    if (map == null) return null;
+
+    return EventDto.fromJson(
+      Map<String, dynamic>.from(map),
+    );
   }
+
 
   @override
   Future<void> cacheEvent(EventDto event) async {
@@ -85,8 +114,27 @@ class EventLocalDataSourceImpl implements EventLocalDataSource {
     await _box.delete(_eventsListKey);
   }
 
+  @override
   Future<void> debugPrintCachedEvents() async {
     print('Hive events box content: ${_box.toMap()}');
   }
+
+
+ /* @override
+  Future<void> debugPrintCachedEventById(String eventId) async {
+    final event = _box.get(eventId);
+
+    if (event == null) {
+      print(' No cached event found for id: $eventId');
+    } else {
+      print(' Cached event [$eventId]: ${jsonDecode(event)}');
+    }
+  }*/
+
+  @override
+  Future<void> debugPrintCachedEventById(String eventId) async {
+    print('Hive event [$eventId] :: ${_box.get(eventId)}');
+  }
+
 
 }

@@ -40,6 +40,13 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   dio: ^5.7.0
+  socket_io_client: ^2.0.3
+
+  # Push notifications: FCM (remote) + local (reminders & foreground display)
+  firebase_core: ^3.8.1
+  firebase_messaging: ^15.1.5
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
 
 dev_dependencies:
   build_runner: ^2.4.13

@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,6 +25,7 @@ class EventListScreen extends ConsumerStatefulWidget {
 
 class _EventListScreenState extends ConsumerState<EventListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -59,8 +62,8 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsProvider);
-
     final authState = ref.watch(authProvider);
+    ref.watch(liveEventUpdatesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -88,71 +91,343 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
       body: eventsAsync.when(
         data: (state) {
           if (state.events.isEmpty) {
-            return const Center(
-              child: Text('No events available'),
-            );
+            return const Center(child: Text('No events available'));
           }
 
-          return RefreshIndicator(
-            onRefresh: _onRefresh,
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: state.events.length + (state.hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == state.events.length) {
-                  // Loading indicator for next page
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                      child: CircularProgressIndicator(),
+          return Column(
+            children: [
+              //Search bar
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    ref.read(eventsProvider.notifier).setSearchQuery(value);
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search events',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                }
+                    isDense: true,
+                  ),
+                ),
+              ),
 
-                final event = state.events[index];
-                return EventListItem(
-                  event: event,
-                  onTap: () => _openEventDetails(context, event.id),
-                );
-              },
-            ),
+              //List
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: state.events.length + (state.hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == state.events.length) {
+                        // Loading indicator for next page
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final event = state.events[index];
+                      return EventListItem(
+                        event: event,
+                        onTap: () => _openEventDetails(context, event.id),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) {
           print("error :$error \n stacktrace : $stackTrace");
           return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading events',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(eventsProvider);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+*/
+
+
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../auth/presentation/providers/providers.dart';
+import '../../../auth/presentation/state/auth_state.dart';
+import '../providers/providers.dart';
+import '../widgets/event_list_item.dart';
+import 'event_details_screen.dart';
+
+/// Screen that displays a paginated list of events.
+///
+/// Features:
+/// - Loading state indicator
+/// - Error state with retry option
+/// - Paginated list with automatic load more
+/// - Pull-to-refresh
+/// - Client-side search filtering
+/// - No business logic (all handled by [EventsNotifier])
+class EventListScreen extends ConsumerStatefulWidget {
+  const EventListScreen({super.key});
+
+  @override
+  ConsumerState<EventListScreen> createState() => _EventListScreenState();
+}
+
+class _EventListScreenState extends ConsumerState<EventListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.8) {
+      ref.read(eventsProvider.notifier).loadMore();
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await ref.read(eventsProvider.notifier).refresh();
+  }
+
+  void _openEventDetails(BuildContext context, String eventId) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EventDetailsScreen(eventId: eventId),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(eventsProvider);
+    final authState = ref.watch(authProvider);
+    ref.watch(liveEventUpdatesProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Events'),
+        actions: [
+          if (authState case AuthAuthenticated(:final session))
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Text(
+                  session.user.displayName,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              ref.read(authProvider.notifier).logout();
+            },
+            tooltip: 'Log out',
+          ),
+        ],
+      ),
+      body: eventsAsync.when(
+        data: (state) {
+          // Use visibleEvents instead of events - this applies search filter + sorting
+          final displayEvents = state.visibleEvents;
+
+          if (state.events.isEmpty) {
+            return const Center(child: Text('No events available'));
+          }
+
+          if (displayEvents.isEmpty && state.searchQuery.isNotEmpty) {
+            return Column(
+              children: [
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      ref.read(eventsProvider.notifier).setSearchQuery(value);
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search events',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                // No results message
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No events found',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try a different search term',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Column(
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    ref.read(eventsProvider.notifier).setSearchQuery(value);
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search events',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: state.searchQuery.isNotEmpty
+                        ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        ref.read(eventsProvider.notifier).setSearchQuery('');
+                      },
+                    )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    isDense: true,
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Error loading events',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(eventsProvider);
-                },
-                child: const Text('Retry'),
+
+              // Results count (optional)
+              if (state.searchQuery.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Found ${displayEvents.length} event${displayEvents.length == 1 ? '' : 's'}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // List
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: displayEvents.length + (state.hasMore && state.searchQuery.isEmpty ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == displayEvents.length) {
+                        // Loading indicator for next page (only show when not searching)
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final event = displayEvents[index];
+                      return EventListItem(
+                        event: event,
+                        onTap: () => _openEventDetails(context, event.id),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
-          ),
-        );
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) {
+          print("error :$error \n stacktrace : $stackTrace");
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading events',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(eventsProvider);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
