@@ -85,6 +85,20 @@ This application demonstrates professional Flutter development with a focus on:
 
 ---
 
+##  Screenshots
+
+| Sign In | Events list | Event details |
+|---------|-------------|----------------|
+| ![Login](screenshots/1_login.png) | ![Events list](screenshots/5_events_list.png) | ![Event details](screenshots/6_event_details.png) |
+
+| Search (results) | Search (empty) | Group chat |
+|-------------------|-----------------|------------|
+| ![Search results](screenshots/3_events_search_results.png) | ![No events found](screenshots/2_events_search_empty.png) | ![Event chat](screenshots/4_event_chat.png) |
+
+*From left to right: Login with demo credentials; paginated events list with registration status; event details with map and Unregister; search with results; search empty state; in-event group chat.*
+
+---
+
 ##  Architecture
 
 ### Clean Architecture Layers

@@ -364,7 +364,6 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
 }
 */
 
-
 ///
 ///
 

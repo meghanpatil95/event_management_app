@@ -19,7 +19,7 @@ class ApiClient {
     this.timeout = const Duration(seconds: 30),
     Map<String, String>? defaultHeaders,
   }) {
-    final url = baseUrl.endsWith('/') ? baseUrl : '$baseUrl';
+    final url = baseUrl.endsWith('/') ? baseUrl : baseUrl;
     _dio = Dio(BaseOptions(
       baseUrl: url,
       connectTimeout: timeout,
@@ -135,7 +135,6 @@ class ApiClient {
         if (statusCode >= 500) {
           throw ServerException(message, statusCode: statusCode, body: data);
         }
-        // throw ApiException(message, statusCode: statusCode, body: data);
         throw ApiException;
     }
   }
