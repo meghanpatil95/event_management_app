@@ -14,8 +14,14 @@ class Event {
   /// Date and time when the event occurs
   final DateTime dateTime;
 
-  /// Location where the event takes place
+  /// Location where the event takes place (address or venue name)
   final String location;
+
+  /// Latitude for map display (optional; when null, map may use default or hide).
+  final double? latitude;
+
+  /// Longitude for map display (optional).
+  final double? longitude;
 
   /// Current status of the event
   final EventStatus status;
@@ -30,6 +36,8 @@ class Event {
     required this.description,
     required this.dateTime,
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.status,
     required this.isRegistered,
   });
@@ -44,6 +52,8 @@ class Event {
     String? description,
     DateTime? dateTime,
     String? location,
+    double? latitude,
+    double? longitude,
     EventStatus? status,
     bool? isRegistered,
   }) {
@@ -53,6 +63,8 @@ class Event {
       description: description ?? this.description,
       dateTime: dateTime ?? this.dateTime,
       location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       status: status ?? this.status,
       isRegistered: isRegistered ?? this.isRegistered,
     );
@@ -68,6 +80,8 @@ class Event {
           description == other.description &&
           dateTime == other.dateTime &&
           location == other.location &&
+          latitude == other.latitude &&
+          longitude == other.longitude &&
           status == other.status &&
           isRegistered == other.isRegistered;
 
@@ -78,14 +92,16 @@ class Event {
       description.hashCode ^
       dateTime.hashCode ^
       location.hashCode ^
+      latitude.hashCode ^
+      longitude.hashCode ^
       status.hashCode ^
       isRegistered.hashCode;
 
   @override
   String toString() {
     return 'Event{id: $id, title: $title, description: $description, '
-        'dateTime: $dateTime, location: $location, status: $status, '
-        'isRegistered: $isRegistered}';
+        'dateTime: $dateTime, location: $location, latitude: $latitude, '
+        'longitude: $longitude, status: $status, isRegistered: $isRegistered}';
   }
 }
 

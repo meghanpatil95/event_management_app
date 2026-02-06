@@ -40,8 +40,9 @@
 - Foreground / background handling
 
 ### 7. Maps Integration
-- Display event location
-- Marker support
+- Display event location (Google Maps SDK)
+- Marker support  
+- **Implementation:** `lib/features/maps/` — see [MAPS.md](../lib/features/maps/MAPS.md)
 
 ---
 

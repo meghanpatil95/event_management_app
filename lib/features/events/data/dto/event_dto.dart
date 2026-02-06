@@ -19,6 +19,12 @@ class EventDto {
   /// Location where the event takes place
   final String location;
 
+  /// Latitude for map display (optional)
+  final double? latitude;
+
+  /// Longitude for map display (optional)
+  final double? longitude;
+
   /// Current status of the event (string representation)
   final String status;
 
@@ -32,6 +38,8 @@ class EventDto {
     required this.description,
     required this.dateTime,
     required this.location,
+    this.latitude,
+    this.longitude,
     required this.status,
     required this.isRegistered,
   });
@@ -44,6 +52,8 @@ class EventDto {
       description: json['description'] as String,
       dateTime: json['dateTime'] as String,
       location: json['location'] as String,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       status: json['status'] as String,
       isRegistered: json['isRegistered'] as bool? ?? false,
     );
@@ -57,6 +67,8 @@ class EventDto {
       'description': description,
       'dateTime': dateTime,
       'location': location,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'status': status,
       'isRegistered': isRegistered,
     };
@@ -70,6 +82,8 @@ class EventDto {
       description: description,
       dateTime: DateTime.parse(dateTime),
       location: location,
+      latitude: latitude,
+      longitude: longitude,
       status: _parseStatus(status),
       isRegistered: isRegistered,
     );
@@ -83,6 +97,8 @@ class EventDto {
       description: event.description,
       dateTime: event.dateTime.toIso8601String(),
       location: event.location,
+      latitude: event.latitude,
+      longitude: event.longitude,
       status: _statusToString(event.status),
       isRegistered: event.isRegistered,
     );

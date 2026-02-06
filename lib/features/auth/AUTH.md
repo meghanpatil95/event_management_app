@@ -482,7 +482,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 ## Why This Architecture?
 
-### ✅ Clean Architecture Benefits
+###  Clean Architecture Benefits
 
 1. **Testability**
     - Each layer can be tested independently
@@ -504,7 +504,7 @@ class LoginScreen extends ConsumerStatefulWidget {
     - Compile-time guarantees
     - No invalid state transitions
 
-### ✅ Riverpod Classic Benefits
+### Riverpod Classic Benefits
 
 1. **Simple Mental Model**
     - `Notifier` holds state and logic

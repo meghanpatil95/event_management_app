@@ -77,12 +77,11 @@ This application demonstrates professional Flutter development with a focus on:
 - Custom notification channels (Android)
 
 ###  Maps Integration
-> **Status:** Pending Google Maps SDK integration
+> **Status:** Implemented with OpenStreetMap (flutter_map); no API keys required.
 >
-> Planned features:
-> - Display event location on Google Maps
-> - Custom markers for event venues
-> - Navigation to event location
+> - Display event location on a map (OSM tiles, single marker, zoom ~13–14)
+> - Optional marker tooltip (event title)
+> - See **docs/map.md** for OpenStreetMap vs Google Maps options.
 
 ---
 
@@ -400,7 +399,7 @@ dependencies:
 
 ### UI
 ```yaml
-  google_maps_flutter: ^2.10.0      # Maps integration (pending)
+  flutter_map: ^8.0.0               # Maps (OpenStreetMap); latlong2 for coordinates
   intl: ^0.19.0                      # Date formatting
 ```
 
@@ -612,7 +611,7 @@ testWidgets('EventListScreen shows events', (tester) async {
 - [x] Display message delivery status
 - [x] Push notifications for event reminders and status updates
 - [x] Handle foreground and background notification scenarios
-- [ ] Display event location using Google Maps SDK (Pending)
+- [x] Display event location on map (OpenStreetMap via flutter_map)
 
 ###  Technical Requirements
 
@@ -755,7 +754,7 @@ Settings → Apps → Event Management App → Permissions → Notifications →
 ##  Future Enhancements
 
 ### Planned Features
-- [ ] Google Maps integration for event locations
+- [ ] Optional: Google Maps SDK for event locations (see docs/map.md)
 - [ ] Biometric authentication (fingerprint/Face ID)
 - [ ] OAuth login (Google, Apple)
 - [ ] Token refresh mechanism

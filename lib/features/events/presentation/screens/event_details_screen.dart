@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/notifications/notification_provider.dart';
 import '../../../chat/presentation/screens/event_chat_screen.dart';
+import '../../../maps/presentation/maps.dart';
 import '../../domain/domain.dart';
 import '../providers/providers.dart';
 import '../state/event_registration_state.dart';
@@ -36,7 +37,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       previous,
       next,
     ) {
-
       if (next.errorMessage != null && previous?.errorMessage == null) {
         ScaffoldMessenger.of(
           context,
@@ -49,8 +49,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       previous,
       next,
     ) {
-
-
       final oldRegistered = previous?.valueOrNull?.isRegistered ?? false;
       final newRegistered = next.valueOrNull?.isRegistered ?? false;
 
@@ -154,9 +152,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 }
 
-
-
-
 class _EventDetailsContent extends ConsumerWidget {
   final Event event;
   final EventRegistrationState registrationState;
@@ -219,67 +214,114 @@ class _EventDetailsContent extends ConsumerWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            event.title,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          _StatusChip(status: event.status),
-          if (isRegistered) ...[
-            const SizedBox(height: 8),
-            Row(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.check_circle,
-                  size: 20,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
                 Text(
-                  'You are registered',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w500,
+                  event.title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(width: 8),
+                _StatusChip(status: event.status),
               ],
             ),
-          ],
-          const SizedBox(height: 24),
-          _DetailRow(
-            icon: Icons.calendar_today,
-            label: 'Date & time',
-            value: _formatDateTime(event.dateTime),
-          ),
-          const SizedBox(height: 12),
-          _DetailRow(
-            icon: Icons.location_on,
-            label: 'Location',
-            value: event.location,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Description',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(event.description, style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: enabled ? onPressed : null,
-              child: buttonChild ?? Text(buttonLabel),
+
+            if (isRegistered) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'You are registered',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 24),
+            _DetailRow(
+              icon: Icons.calendar_today,
+              label: 'Date & time',
+              value: _formatDateTime(event.dateTime),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            _DetailRow(
+              icon: Icons.location_on,
+              label: 'Location',
+              value: event.location,
+            ),
+            if (event.latitude != null && event.longitude != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Map',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              EventLocationMap(
+                latitude: event.latitude!,
+                longitude: event.longitude!,
+                title: event.title,
+                height: 200,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  openEventLocationInMaps(
+                    event.latitude!,
+                    event.longitude!,
+                    onError: (message) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message ?? 'Could not open maps'),
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+                icon: const Icon(Icons.directions, size: 20),
+                label: const Text('Open in Maps'),
+              ),
+            ],
+            const SizedBox(height: 24),
+            Text(
+              'Description',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              event.description,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: enabled ? onPressed : null,
+                child: buttonChild ?? Text(buttonLabel),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

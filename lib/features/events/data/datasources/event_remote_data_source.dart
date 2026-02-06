@@ -157,6 +157,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: e.description,
       dateTime: e.dateTime,
       location: e.location,
+      latitude: e.latitude,
+      longitude: e.longitude,
       status: over,
       isRegistered: e.isRegistered,
     );
@@ -211,6 +213,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: event.description,
       dateTime: event.dateTime,
       location: event.location,
+      latitude: event.latitude,
+      longitude: event.longitude,
       status: event.status,
       isRegistered: true,
     );
@@ -241,6 +245,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
         description: event.description,
         dateTime: event.dateTime,
         location: event.location,
+        latitude: event.latitude,
+        longitude: event.longitude,
         status: 'expired',
         isRegistered: false,
       );
@@ -258,6 +264,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: event.description,
       dateTime: event.dateTime,
       location: event.location,
+      latitude: event.latitude,
+      longitude: event.longitude,
       status: event.status,
       isRegistered: false,
     );
@@ -357,12 +365,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
 */
 
 
-
-
-///meghan
 ///
 ///
-
 
 /// Exception thrown when an event is not found.
 class EventNotFoundException implements Exception {
@@ -507,6 +511,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: e.description,
       dateTime: e.dateTime,
       location: e.location,
+      latitude: e.latitude,
+      longitude: e.longitude,
       status: over,
       isRegistered: e.isRegistered,
     );
@@ -561,6 +567,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: event.description,
       dateTime: event.dateTime,
       location: event.location,
+      latitude: event.latitude,
+      longitude: event.longitude,
       status: event.status,
       isRegistered: true,
     );
@@ -591,6 +599,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
         description: event.description,
         dateTime: event.dateTime,
         location: event.location,
+        latitude: event.latitude,
+        longitude: event.longitude,
         status: 'expired',
         isRegistered: false,
       );
@@ -608,6 +618,8 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
       description: event.description,
       dateTime: event.dateTime,
       location: event.location,
+      latitude: event.latitude,
+      longitude: event.longitude,
       status: event.status,
       isRegistered: false,
     );
@@ -637,8 +649,53 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
     }
   }
 
+  /// Mock coordinates per venue for map display (San Francisco area).
+  /*  static const Map<String, ({double lat, double lng})> _locationCoordinates = {
+    'Conference Center': (lat: 37.7849, lng: -122.4094),
+    'Grand Ballroom': (lat: 37.7870, lng: -122.4010),
+    'Tech Hub': (lat: 37.7749, lng: -122.4194),
+    'Community Hall': (lat: 37.7699, lng: -122.4264),
+    'Exhibition Center': (lat: 37.7895, lng: -122.4018),
+    'City Park': (lat: 37.7694, lng: -122.4862),
+    'University Campus': (lat: 37.8719, lng: -122.2585),
+    'Hotel Convention Center': (lat: 37.7853, lng: -122.4086),
+  };*/
+
+  /// Mock coordinates per venue for map display (India).
+  static const Map<String, ({double lat, double lng})> _locationCoordinates = {
+    // Bengaluru
+    'Bangalore Convention Center': (lat: 12.972442, lng: 77.580643),
+    'Tech Park Whitefield': (lat: 12.969819, lng: 77.749972),
+
+    // Mumbai
+    'Mumbai Exhibition Centre': (lat: 19.162206, lng: 72.937422),
+    'BKC Business Hub': (lat: 19.060722, lng: 72.869777),
+
+    // Delhi / NCR
+    'Pragati Maidan': (lat: 28.612912, lng: 77.234721),
+    'Gurugram Cyber City': (lat: 28.494644, lng: 77.089558),
+
+    // Hyderabad
+    'HITEX Exhibition Center': (lat: 17.469972, lng: 78.376017),
+    'Hitech City': (lat: 17.447412, lng: 78.376230),
+
+    // Chennai
+    'Chennai Trade Centre': (lat: 13.010978, lng: 80.205538),
+    'OMR IT Corridor': (lat: 12.840640, lng: 80.153380),
+
+    // Pune
+    'Hinjewadi IT Park': (lat: 18.591271, lng: 73.738899),
+    'Pune Convention Centre': (lat: 18.536208, lng: 73.893974),
+
+    // Kolkata
+    'Biswa Bangla Convention Centre': (lat: 22.580536, lng: 88.459431),
+
+    // Ahmedabad
+    'GIFT City': (lat: 23.161787, lng: 72.683516),
+  };
+
   /// Generates mock event data with correct status logic.
-  void _generateMockEvents() {
+  /*void _generateMockEvents() {
     final now = DateTime.now();
     final locations = [
       'Conference Center',
@@ -688,8 +745,10 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
         0, // seconds
       );
 
-      // ✅ FIXED: Compare full DateTime, not just date
+      //  FIXED: Compare full DateTime, not just date
       final status = _getEventStatus(eventDate, now);
+      final locationName = locations[_random.nextInt(locations.length)];
+      final coords = _locationCoordinates[locationName];
 
       final event = EventDto(
         id: eventId,
@@ -699,7 +758,74 @@ class MockEventRemoteDataSource implements EventRemoteDataSource {
             'and networking opportunities. This is a detailed description of '
             'what attendees can expect.',
         dateTime: eventDate.toIso8601String(),
-        location: locations[_random.nextInt(locations.length)],
+        location: locationName,
+        latitude: coords?.lat,
+        longitude: coords?.lng,
+        status: status,
+        isRegistered: _random.nextBool(),
+      );
+
+      _events[eventId] = event;
+    }
+  }*/
+
+  void _generateMockEvents() {
+    final now = DateTime.now();
+
+    //  Always sync locations with lat/long map
+    final locations = _locationCoordinates.keys.toList();
+
+    final titles = [
+      'Tech Conference 2026',
+      'Flutter Meetup',
+      'Design Workshop',
+      'Startup Pitch Night',
+      'Networking Event',
+      'Hackathon',
+      'Product Launch',
+      'Annual Summit',
+      'Developer Day',
+      'Innovation Forum',
+      'AI Workshop',
+      'Mobile Dev Conference',
+      'Cloud Summit',
+      'Data Science Meetup',
+      'UI/UX Design Day',
+    ];
+
+    for (int i = 0; i < 50; i++) {
+      final eventId = 'event_${i + 1}';
+
+      // Random date offset (-10 to +50 days)
+      final daysOffset = _random.nextInt(60) - 10;
+
+      // Random hour (8 AM to 8 PM)
+      final hour = 8 + _random.nextInt(13);
+
+      final eventDate = DateTime(
+        now.year,
+        now.month,
+        now.day + daysOffset,
+        hour,
+      );
+
+      final status = _getEventStatus(eventDate, now);
+
+      //  Location ALWAYS exists in map
+      final locationName = locations[_random.nextInt(locations.length)];
+      final coords = _locationCoordinates[locationName]!;
+
+      final event = EventDto(
+        id: eventId,
+        title: titles[_random.nextInt(titles.length)],
+        description:
+            'Join us for an exciting event featuring industry experts '
+            'and networking opportunities. This is a detailed description of '
+            'what attendees can expect.',
+        dateTime: eventDate.toIso8601String(),
+        location: locationName,
+        latitude: coords.lat,
+        longitude: coords.lng,
         status: status,
         isRegistered: _random.nextBool(),
       );
